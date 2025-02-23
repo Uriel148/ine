@@ -13,7 +13,7 @@ __pycache__/
 *.sqlite3
 
 # Ignorar archivos de entorno (si los tienes)
-#.env
+.env
 #.venv
 #env/
 #venv/
