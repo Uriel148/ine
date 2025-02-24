@@ -23,7 +23,7 @@ def extract_all_text(image_path):
     
     return text
 
-
+"""
 def parse_ine_data(text):
     # Normalizar texto: eliminar saltos de línea y espacios múltiples
     text_clean = " ".join(text.replace('\n', ' ').split()).lower()
@@ -48,11 +48,25 @@ def parse_ine_data(text):
         else:
             ine_data[key] = "No detectado"
 
-    return ine_data
+    return ine_data"""
 
-image = "images/ine_test_1.jpg"
+def parse_ine_data(text):
+    # Limpiar el texto: eliminar caracteres especiales y corregir errores comunes
+    text_clean = re.sub(
+        r'[^\w\s/ÁÉÍÓÚáéíóúÑñ.,#-]',  # Mantener letras, números, y algunos símbolos útiles
+        ' ', 
+        text
+    )
+    text_clean = " ".join(text_clean.split()).lower()
+    
+    return text_clean
+
+#image = "images/ine_test_1.jpg"
+image = "images/ine_uriel.jpg"
 text = extract_all_text(image)
-print(text)
+print("Text",text)
+text_clean = parse_ine_data(text)
+print("Text clean",text_clean)
 
 #datos = parse_ine_data(text)
 #print(datos)

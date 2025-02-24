@@ -18,5 +18,8 @@ __pycache__/
 #env/
 #venv/
 
+#Imagenes
+images/ine_uriel.jpg
+
 # Ignorar archivos generados por el sistema
 #.DS_Store (para macOS)
