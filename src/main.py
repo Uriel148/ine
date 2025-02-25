@@ -23,50 +23,45 @@ def extract_all_text(image_path):
     
     return text
 
-"""
-def parse_ine_data(text):
-    # Normalizar texto: eliminar saltos de línea y espacios múltiples
-    text_clean = " ".join(text.replace('\n', ' ').split()).lower()
-
-    # Expresiones regulares flexibles para campos comunes
-    patterns = {
-        'nombre': r'(nombre|nombre completo)\s*:?\s*([a-záéíóúñ\s]+)\b',
-        'curp': r'(curp)\s*:?\s*([a-z0-9]{18})\b',
-        'clave_elector': r'(clave de elector|clave)\s*:?\s*([a-z0-9]{18})\b',
-        'domicilio': r'(domicilio|dirección)\s*:?\s*([a-z0-9\s,.#-]+)\b',
-        'fecha_nacimiento': r'(fecha de nacimiento|nacimiento)\s*:?\s*(\d{2}/\d{2}/\d{4})',
-        'vigencia': r'(vigencia|válida hasta)\s*:?\s*(\d{2}/\d{2}/\d{4})',
-        'seccion': r'(sección|seccion)\s*:?\s*(\d+)',
-        'folio': r'(folio)\s*:?\s*([a-z0-9]+)\b'
-    }
-
-    ine_data = {}
-    for key, pattern in patterns.items():
-        match = re.search(pattern, text_clean, re.IGNORECASE)
-        if match:
-            ine_data[key] = match.group(2).strip().upper() if key not in ['seccion'] else match.group(2)
-        else:
-            ine_data[key] = "No detectado"
-
-    return ine_data"""
-
-def parse_ine_data(text):
-    # Limpiar el texto: eliminar caracteres especiales y corregir errores comunes
-    text_clean = re.sub(
-        r'[^\w\s/ÁÉÍÓÚáéíóúÑñ.,#-]',  # Mantener letras, números, y algunos símbolos útiles
-        ' ', 
-        text
-    )
-    text_clean = " ".join(text_clean.split()).lower()
+def limpiar_texto(texto):
+    # Eliminar signos de puntuación y caracteres especiales (excepto letras con acentos y números)
+    texto_limpio = re.sub(r'[^a-zA-Z0-9\sáéíóúÁÉÍÓÚ]', '', texto)
     
-    return text_clean
+    # Eliminar letras sueltas (palabras de un solo carácter sin acento)
+    texto_limpio = re.sub(r'\b[a-zA-Z]\b', '', texto_limpio)
+    
+    # Eliminar números sueltos (que no estén junto a otro número o letra)
+    texto_limpio = re.sub(r'\b[0-9]\b', '', texto_limpio)
+    
+    # Eliminar espacios extra generados
+    texto_limpio = re.sub(r'\s+', ' ', texto_limpio).strip()
+    
+    return texto_limpio
+
+def extraer_curp(texto):
+    # Buscar la palabra 'curp'
+    patron_keyword = re.compile(r'curp', re.IGNORECASE)
+    match_keyword = patron_keyword.search(texto)
+    if not match_keyword:
+        return None  # No se encontró la palabra 'curp'
+    
+    # Desde la posición en que se encontró la palabra, tomar el resto del texto
+    texto_desde_keyword = texto[match_keyword.end():]
+    print("texto desde curp",texto_desde_keyword)
+    # Buscar la primera secuencia de 18 caracteres alfanuméricos en el resto del texto
+    match_curp = re.search(r'([A-Z0-9]{16})', texto_desde_keyword, re.IGNORECASE)
+    if match_curp:
+        return match_curp.group(1)
+    return None
 
 #image = "images/ine_test_1.jpg"
-image = "images/ine_uriel.jpg"
+image = "images/ine_test_1.jpg"
 text = extract_all_text(image)
-print("Text",text)
-text_clean = parse_ine_data(text)
-print("Text clean",text_clean)
+print("Text:",text)
+text_clean = limpiar_texto(text)
+print("Text clean:",text_clean)
+curp = extraer_curp(text_clean)
+print("Curp:",curp)
 
 #datos = parse_ine_data(text)
 #print(datos)
