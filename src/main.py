@@ -17,7 +17,7 @@ def extract_all_text(image_path):
     #cv2.imshow("Imagen despues del treshhold", thresh)
     #cv2.waitKey(0)
     #cv2.destroyAllWindows()
-    # Extraer TODO el texto con Tesseract
+    # Extraer todo el texto con Tesseract
     custom_config = r'--oem 3 --psm 6 -l spa'
     text = pytesseract.image_to_string(gray, config=custom_config)
     
@@ -42,19 +42,22 @@ def extraer_curp(texto):
     # Buscar la palabra 'curp'
     patron_keyword = re.compile(r'curp', re.IGNORECASE)
     match_keyword = patron_keyword.search(texto)
-    if not match_keyword:
-        return None  # No se encontró la palabra 'curp'
     
-    # Desde la posición en que se encontró la palabra, tomar el resto del texto
-    texto_desde_keyword = texto[match_keyword.end():]
-    print("texto desde curp",texto_desde_keyword)
-    # Buscar la primera secuencia de 18 caracteres alfanuméricos en el resto del texto
-    match_curp = re.search(r'([A-Z0-9]{18})', texto_desde_keyword, re.IGNORECASE)
-    if match_curp:
-        return match_curp.group(1)
+    if match_keyword:
+        # Desde la posición en que se encontró la palabra, tomar el resto del texto
+        texto_desde_keyword = texto[match_keyword.end():]
+        print("Texto desde 'curp':", texto_desde_keyword)
+        # Buscar la primera secuencia de 18 caracteres alfanuméricos en el resto del texto
+        match_curp = re.search(r'([A-Z0-9]{18})', texto_desde_keyword, re.IGNORECASE)
+        if match_curp:
+            return match_curp.group(1)
+    
+    # Si no se encontró 'curp', buscar la última secuencia de 18 caracteres alfanuméricos en todo el texto
+    matches = re.findall(r'([A-Z0-9]{18})', texto, re.IGNORECASE)
+    if matches:
+        return matches[-1]  # Tomar la última coincidencia
+    
     return None
-
-
 
 def corregir_fecha_curp(curp):
     
