@@ -6,6 +6,34 @@ import os
 
 load_dotenv("./.env")
 
+def recortar_credencial(imagen_path, salida_path):
+    # Cargar la imagen
+    imagen = cv2.imread(imagen_path)
+    
+    # Convertir a escala de grises
+    gris = cv2.cvtColor(imagen, cv2.COLOR_BGR2GRAY)
+    
+    # Aplicar un desenfoque para reducir ruido
+    desenfoque = cv2.GaussianBlur(gris, (5, 5), 0)
+    
+    # Aplicar umbralización para detectar los bordes
+    _, umbral = cv2.threshold(desenfoque, 200, 255, cv2.THRESH_BINARY_INV)
+    
+    # Encontrar los contornos
+    contornos, _ = cv2.findContours(umbral, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    # Encontrar el contorno más grande (suponiendo que es la credencial)
+    contorno_principal = max(contornos, key=cv2.contourArea)
+    
+    # Obtener la caja delimitadora de la credencial
+    x, y, w, h = cv2.boundingRect(contorno_principal)
+    
+    # Recortar la credencial
+    credencial_recortada = imagen[y:y+h, x:x+w]
+    
+    # Guardar la imagen recortada
+    cv2.imwrite(salida_path, credencial_recortada)
+
 def extract_all_text(image_path):
     # Configurar Tesseract (ajusta la ruta según tu sistema)
     pytesseract.pytesseract.tesseract_cmd = os.getenv("TESSERACT_PATH")  # Windows
@@ -123,8 +151,11 @@ def obtener_datos_curp(curp):
         "estado": estado
     }
 
+
 #image = "images/ine_test_1.jpg"
-image = "images/ine_uriel.jpg"
+#image = "images/ine_uriel.jpg"
+image = "images/img_4.jpg"
+
 text = extract_all_text(image)
 print("Text:",text)
 text_clean = limpiar_texto(text)
@@ -136,7 +167,4 @@ datos_curp = obtener_datos_curp(curp)
 print("datos_curp",datos_curp)
 #datos = parse_ine_data(text)
 #print(datos)
-
-
-
 

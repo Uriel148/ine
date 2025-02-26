@@ -20,6 +20,11 @@ __pycache__/
 
 #Imagenes
 images/ine_uriel.jpg
+images/img_1.jpg
+images/img_2.jpg
+images/img_3.jpg
+images/img_4.jpg
+images/img_5.jpg
 
 # Ignorar archivos generados por el sistema
 #.DS_Store (para macOS)
