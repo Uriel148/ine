@@ -54,11 +54,12 @@ def extraer_curp(texto):
         return match_curp.group(1)
     return None
 
-correcciones = {
-    'O': '0', 'I': '1', 'L': '1', 'Z': '2', 'A': '4', 'S': '5', 'B': '8'
-}
+
 
 def corregir_fecha_curp(curp):
+    
+    correcciones = {'O': '0', 'I': '1', 'L': '1', 'Z': '2', 'A': '4', 'S': '5', 'B': '8'}
+    
     if len(curp) != 18:
         return None  # No es una CURP válida
 
