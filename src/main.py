@@ -14,12 +14,12 @@ def extract_all_text(image_path):
     img = cv2.imread(image_path)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     _, thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    cv2.imshow("Imagen despues del treshhold", thresh)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    #cv2.imshow("Imagen despues del treshhold", thresh)
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()
     # Extraer TODO el texto con Tesseract
     custom_config = r'--oem 3 --psm 6 -l spa'
-    text = pytesseract.image_to_string(thresh, config=custom_config)
+    text = pytesseract.image_to_string(gray, config=custom_config)
     
     return text
 
@@ -49,20 +49,87 @@ def extraer_curp(texto):
     texto_desde_keyword = texto[match_keyword.end():]
     print("texto desde curp",texto_desde_keyword)
     # Buscar la primera secuencia de 18 caracteres alfanuméricos en el resto del texto
-    match_curp = re.search(r'([A-Z0-9]{16})', texto_desde_keyword, re.IGNORECASE)
+    match_curp = re.search(r'([A-Z0-9]{18})', texto_desde_keyword, re.IGNORECASE)
     if match_curp:
         return match_curp.group(1)
     return None
 
+correcciones = {
+    'O': '0', 'I': '1', 'L': '1', 'Z': '2', 'A': '4', 'S': '5', 'B': '8'
+}
+
+def corregir_fecha_curp(curp):
+    if len(curp) != 18:
+        return None  # No es una CURP válida
+
+    # Separar la CURP en partes
+    parte_fija = curp[:4]  # Letras iniciales
+    fecha_nacimiento = curp[4:10]  # AAMMDD (donde debe haber solo números)
+    resto = curp[10:]  # Sexo, estado, consonantes internas, etc.
+
+    # Corregir caracteres en la fecha de nacimiento
+    fecha_corregida = ''.join(correcciones.get(c, c) for c in fecha_nacimiento)
+
+    # Asegurar que la fecha ahora contenga solo números
+    if not fecha_corregida.isdigit():
+        return None  # Si aún hay letras, la CURP es inválida
+
+    # Unir las partes corregidas y devolver la CURP válida
+    return parte_fija + fecha_corregida + resto
+
+def obtener_datos_curp(curp):
+
+    if len(curp) != 18:
+        return "CURP inválida, debe tener 18 caracteres."
+
+    # Extraer la fecha de nacimiento
+    anio_int = int(curp[4:6])  
+    anio = curp[4:6]
+    mes = curp[6:8]
+    dia = curp[8:10]
+
+    # Determinar siglo de nacimiento (asumiendo CURP moderna)
+    siglo = "19" if anio_int >= 30 else "20"
+    fecha_nacimiento = f"{dia}/{mes}/{siglo}{anio}"
+
+    # Extraer el sexo
+    sexo = "Hombre" if curp[10] == "H" else "Mujer"
+
+    # Catálogo de estados según el código en la CURP
+    estados = {
+        "AS": "Aguascalientes", "BC": "Baja California", "BS": "Baja California Sur",
+        "CC": "Campeche", "CL": "Coahuila", "CM": "Colima", "CS": "Chiapas",
+        "CH": "Chihuahua", "DF": "Ciudad de México", "DG": "Durango",
+        "GT": "Guanajuato", "GR": "Guerrero", "HG": "Hidalgo", "JC": "Jalisco",
+        "MC": "México", "MN": "Michoacán", "MS": "Morelos", "NT": "Nayarit",
+        "NL": "Nuevo León", "OC": "Oaxaca", "PL": "Puebla", "QT": "Querétaro",
+        "QR": "Quintana Roo", "SP": "San Luis Potosí", "SL": "Sinaloa",
+        "SR": "Sonora", "TC": "Tabasco", "TS": "Tamaulipas", "TL": "Tlaxcala",
+        "VZ": "Veracruz", "YN": "Yucatán", "ZS": "Zacatecas",
+        "NE": "Extranjero"
+    }
+    
+    # Obtener el estado de nacimiento
+    estado = estados.get(curp[11:13], "Desconocido")
+
+    # Retornar los datos en un diccionario
+    return {
+        "fecha_nacimiento": fecha_nacimiento,
+        "sexo": sexo,
+        "estado": estado
+    }
+
 #image = "images/ine_test_1.jpg"
-image = "images/ine_test_1.jpg"
+image = "images/ine_uriel.jpg"
 text = extract_all_text(image)
 print("Text:",text)
 text_clean = limpiar_texto(text)
 print("Text clean:",text_clean)
 curp = extraer_curp(text_clean)
-print("Curp:",curp)
-
+curp = corregir_fecha_curp(curp)
+print(curp)
+datos_curp = obtener_datos_curp(curp)
+print("datos_curp",datos_curp)
 #datos = parse_ine_data(text)
 #print(datos)
 
