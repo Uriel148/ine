@@ -6,45 +6,24 @@ import os
 
 load_dotenv("./.env")
 
-def recortar_credencial(imagen_path, salida_path):
-    # Cargar la imagen
-    imagen = cv2.imread(imagen_path)
-    
-    # Convertir a escala de grises
-    gris = cv2.cvtColor(imagen, cv2.COLOR_BGR2GRAY)
-    
-    # Aplicar un desenfoque para reducir ruido
-    desenfoque = cv2.GaussianBlur(gris, (5, 5), 0)
-    
-    # Aplicar umbralización para detectar los bordes
-    _, umbral = cv2.threshold(desenfoque, 200, 255, cv2.THRESH_BINARY_INV)
-    
-    # Encontrar los contornos
-    contornos, _ = cv2.findContours(umbral, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    
-    # Encontrar el contorno más grande (suponiendo que es la credencial)
-    contorno_principal = max(contornos, key=cv2.contourArea)
-    
-    # Obtener la caja delimitadora de la credencial
-    x, y, w, h = cv2.boundingRect(contorno_principal)
-    
-    # Recortar la credencial
-    credencial_recortada = imagen[y:y+h, x:x+w]
-    
-    # Guardar la imagen recortada
-    cv2.imwrite(salida_path, credencial_recortada)
-
 def extract_all_text(image_path):
     # Configurar Tesseract (ajusta la ruta según tu sistema)
     pytesseract.pytesseract.tesseract_cmd = os.getenv("TESSERACT_PATH")  # Windows
 
     # Leer imagen y aplicar preprocesamiento
     img = cv2.imread(image_path)
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    
+    # Definir nuevo tamaño (1280x720)
+    nuevo_tamano = (1280, 720)
+
+    # Redimensionar la imagen
+    imagen_redimensionada = cv2.resize(img, nuevo_tamano, interpolation=cv2.INTER_CUBIC)
+    
+    gray = cv2.cvtColor(imagen_redimensionada, cv2.COLOR_BGR2GRAY)
     _, thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    #cv2.imshow("Imagen despues del treshhold", thresh)
-    #cv2.waitKey(0)
-    #cv2.destroyAllWindows()
+    cv2.imshow("Imagen despues del treshhold", gray)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
     # Extraer todo el texto con Tesseract
     custom_config = r'--oem 3 --psm 6 -l spa'
     text = pytesseract.image_to_string(gray, config=custom_config)
@@ -90,27 +69,32 @@ def extraer_curp(texto):
 def corregir_fecha_curp(curp):
     
     correcciones = {'O': '0', 'I': '1', 'L': '1', 'Z': '2', 'A': '4', 'S': '5', 'B': '8'}
-    
+    correcciones = {'O': '0', 'I': '1', 'L': '1', 'Z': '2', 'A': '4', 'S': '5', 'B': '8'}
+    if curp == None:
+        return None
     if len(curp) != 18:
         return None  # No es una CURP válida
 
     # Separar la CURP en partes
     parte_fija = curp[:4]  # Letras iniciales
     fecha_nacimiento = curp[4:10]  # AAMMDD (donde debe haber solo números)
-    resto = curp[10:]  # Sexo, estado, consonantes internas, etc.
-
+    resto = curp[10:16]  # Sexo, estado, consonantes internas, etc.
+    ultimos_dos = curp[16:]
     # Corregir caracteres en la fecha de nacimiento
     fecha_corregida = ''.join(correcciones.get(c, c) for c in fecha_nacimiento)
-
+    ultimos_dos_corregido = ultimos_dos.replace('O', '0')
     # Asegurar que la fecha ahora contenga solo números
     if not fecha_corregida.isdigit():
         return None  # Si aún hay letras, la CURP es inválida
 
     # Unir las partes corregidas y devolver la CURP válida
-    return parte_fija + fecha_corregida + resto
+    return parte_fija + fecha_corregida + resto + ultimos_dos_corregido
 
 def obtener_datos_curp(curp):
-
+    
+    if curp == None:
+        return None
+    
     if len(curp) != 18:
         return "CURP inválida, debe tener 18 caracteres."
 
@@ -154,10 +138,12 @@ def obtener_datos_curp(curp):
 
 #image = "images/ine_test_1.jpg"
 #image = "images/ine_uriel.jpg"
-image = "images/img_4.jpg"
+image = "images/img_1.jpg"
 
 text = extract_all_text(image)
+#text = extract_id_card_fields(image)
 print("Text:",text)
+
 text_clean = limpiar_texto(text)
 print("Text clean:",text_clean)
 curp = extraer_curp(text_clean)
@@ -165,6 +151,5 @@ curp = corregir_fecha_curp(curp)
 print(curp)
 datos_curp = obtener_datos_curp(curp)
 print("datos_curp",datos_curp)
-#datos = parse_ine_data(text)
-#print(datos)
+
 
