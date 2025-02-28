@@ -28,3 +28,6 @@ images/img_5.jpg
 
 # Ignorar archivos generados por el sistema
 #.DS_Store (para macOS)
+
+#Test
+src/test.py

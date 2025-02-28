@@ -3,6 +3,12 @@ import pytesseract
 import re
 from dotenv import load_dotenv
 import os
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.edge.service import Service
+from webdriver_manager.microsoft import EdgeChromiumDriverManager
 
 load_dotenv("./.env")
 
@@ -20,13 +26,16 @@ def extract_all_text(image_path):
     imagen_redimensionada = cv2.resize(img, nuevo_tamano, interpolation=cv2.INTER_CUBIC)
     
     gray = cv2.cvtColor(imagen_redimensionada, cv2.COLOR_BGR2GRAY)
-    _, thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    
     cv2.imshow("Imagen despues del treshhold", gray)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
     # Extraer todo el texto con Tesseract
     custom_config = r'--oem 3 --psm 6 -l spa'
     text = pytesseract.image_to_string(gray, config=custom_config)
+    
+    #data = pytesseract.image_to_data(gray, config=custom_config)
+    #print(data)
     
     return text
 
@@ -90,6 +99,47 @@ def corregir_fecha_curp(curp):
     # Unir las partes corregidas y devolver la CURP válida
     return parte_fija + fecha_corregida + resto + ultimos_dos_corregido
 
+def curp_scraping(curp):
+    # Inicializar el WebDriver para Edge
+    service = Service(EdgeChromiumDriverManager().install())
+    driver = webdriver.Edge(service=service)
+
+    # URL de la página de consulta
+    url = "https://www.gob.mx/curp/"
+    driver.get(url)
+
+    # Espera explícita para esperar a que los elementos se carguen (hasta 10 segundos)
+    wait = WebDriverWait(driver, 10)
+
+    try:
+        # Esperar a que el campo de entrada esté presente y capturarlo
+        input_curp = wait.until(EC.presence_of_element_located((By.ID, "curpinput")))
+        input_curp.clear()
+        input_curp.send_keys(curp)
+
+        # Encontrar y hacer clic en el botón de consulta
+        consultar_btn = wait.until(EC.element_to_be_clickable((By.ID, "searchButton")))
+        consultar_btn.click()
+            
+        # Esperar a que se muestren los resultados
+        #resultado = wait.until(EC.presence_of_element_located((By.ID, "resultado")))
+        tablas = wait.until(EC.presence_of_all_elements_located((By.TAG_NAME, "table")))
+
+        # Recorrer todas las tablas y extraer su contenido
+        for i, tabla in enumerate(tablas, start=1):
+            print(f"Contenido de la Tabla {i}:")
+            print(tabla.text)
+            print("-" * 40)
+
+        # Regresar a la página principal para la siguiente consulta
+        driver.get(url)
+    except Exception as e:
+        print(f"Ocurrió un error al procesar la CURP {curp}: {e}")
+        driver.get(url)  # Volver a la página principal en caso de error
+
+    # Cerrar el navegador
+    driver.quit()
+
 def obtener_datos_curp(curp):
     
     if curp == None:
@@ -138,18 +188,18 @@ def obtener_datos_curp(curp):
 
 #image = "images/ine_test_1.jpg"
 #image = "images/ine_uriel.jpg"
-image = "images/img_1.jpg"
+image = "images/img_4.jpg"
 
 text = extract_all_text(image)
-#text = extract_id_card_fields(image)
 print("Text:",text)
-
 text_clean = limpiar_texto(text)
 print("Text clean:",text_clean)
 curp = extraer_curp(text_clean)
 curp = corregir_fecha_curp(curp)
 print(curp)
-datos_curp = obtener_datos_curp(curp)
-print("datos_curp",datos_curp)
+datos_curp = curp_scraping(curp)
+#datos_curp = obtener_datos_curp(curp)
+#print("datos_curp",datos_curp)
+
 
 
