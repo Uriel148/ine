@@ -100,6 +100,9 @@ def corregir_fecha_curp(curp):
     return parte_fija + fecha_corregida + resto + ultimos_dos_corregido
 
 def curp_scraping(curp):
+    
+    datos_completos = {}
+    
     # Inicializar el WebDriver para Edge
     service = Service(EdgeChromiumDriverManager().install())
     driver = webdriver.Edge(service=service)
@@ -124,21 +127,30 @@ def curp_scraping(curp):
         # Esperar a que se muestren los resultados
         #resultado = wait.until(EC.presence_of_element_located((By.ID, "resultado")))
         tablas = wait.until(EC.presence_of_all_elements_located((By.TAG_NAME, "table")))
-
+        
+        for tabla in tablas:
+            filas = tabla.find_elements(By.TAG_NAME, "tr")
+            for fila in filas:
+                celdas = fila.find_elements(By.TAG_NAME, "td")
+                if len(celdas) == 2:  # Asegurar que hay clave y valor
+                    clave = celdas[0].text.strip().replace(":", "")  # Quitar los ":"
+                    valor = celdas[1].text.strip()
+                    datos_completos[clave] = valor
+        """
         # Recorrer todas las tablas y extraer su contenido
         for i, tabla in enumerate(tablas, start=1):
             print(f"Contenido de la Tabla {i}:")
             print(tabla.text)
-            print("-" * 40)
+            print("-" * 40)"""
 
-        # Regresar a la página principal para la siguiente consulta
-        driver.get(url)
     except Exception as e:
         print(f"Ocurrió un error al procesar la CURP {curp}: {e}")
         driver.get(url)  # Volver a la página principal en caso de error
 
     # Cerrar el navegador
     driver.quit()
+    
+    return datos_completos
 
 def obtener_datos_curp(curp):
     
@@ -199,7 +211,7 @@ curp = corregir_fecha_curp(curp)
 print(curp)
 datos_curp = curp_scraping(curp)
 #datos_curp = obtener_datos_curp(curp)
-#print("datos_curp",datos_curp)
+print("datos_curp",datos_curp)
 
 
 
