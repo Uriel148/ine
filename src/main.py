@@ -152,6 +152,19 @@ def curp_scraping(curp):
     
     return datos_completos
 
+def obtener_localidad(texto):
+    # Expresión regular para encontrar "LOC", "L0C" o cualquier combinación de mayúsculas y minúsculas
+    patron = re.compile(r"(?:L0C|LOC)\s+(.*?)(?=\d)", re.IGNORECASE)
+    
+    # Buscar coincidencia
+    coincidencia = patron.search(texto)
+    
+    # Si hay coincidencia, devolver el grupo capturado
+    if coincidencia:
+        return coincidencia.group(1).strip()
+    else:
+        return None
+
 def obtener_datos_curp(curp):
     
     if curp == None:
@@ -200,7 +213,7 @@ def obtener_datos_curp(curp):
 
 #image = "images/ine_test_1.jpg"
 #image = "images/ine_uriel.jpg"
-image = "images/img_4.jpg"
+image = "images/img_5.jpg"
 
 text = extract_all_text(image)
 print("Text:",text)
@@ -209,9 +222,12 @@ print("Text clean:",text_clean)
 curp = extraer_curp(text_clean)
 curp = corregir_fecha_curp(curp)
 print(curp)
-datos_curp = curp_scraping(curp)
+#datos_curp = curp_scraping(curp)
 #datos_curp = obtener_datos_curp(curp)
-print("datos_curp",datos_curp)
+#print("datos_curp",datos_curp)
+
+localidad = obtener_localidad(text_clean)
+print("localidad: ",localidad)
 
 
 
