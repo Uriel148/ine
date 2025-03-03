@@ -62,7 +62,7 @@ def extraer_curp(texto):
     if match_keyword:
         # Desde la posición en que se encontró la palabra, tomar el resto del texto
         texto_desde_keyword = texto[match_keyword.end():]
-        print("Texto desde 'curp':", texto_desde_keyword)
+        #print("Texto desde 'curp':", texto_desde_keyword)
         # Buscar la primera secuencia de 18 caracteres alfanuméricos en el resto del texto
         match_curp = re.search(r'([A-Z0-9]{18})', texto_desde_keyword, re.IGNORECASE)
         if match_curp:
@@ -153,17 +153,23 @@ def curp_scraping(curp):
     return datos_completos
 
 def obtener_localidad(texto):
+    #Funciona en el caso de que la localidad sea una comunindad 
+    
     # Expresión regular para encontrar "LOC", "L0C" o cualquier combinación de mayúsculas y minúsculas
     patron = re.compile(r"(?:L0C|LOC)\s+(.*?)(?=\d)", re.IGNORECASE)
+    patron2 = re.compile(r"(?:C0L|COL)\s+(.*?)(?=\d)", re.IGNORECASE)
     
     # Buscar coincidencia
     coincidencia = patron.search(texto)
+    coincidencia2 = patron2.search(texto)
     
     # Si hay coincidencia, devolver el grupo capturado
     if coincidencia:
         return coincidencia.group(1).strip()
+    elif coincidencia2:
+        return coincidencia2.group(1).strip()
     else:
-        return None
+        return None #Si se trabaja con un municipio por defecto este campo es posible cambiarlo
 
 def obtener_datos_curp(curp):
     
@@ -213,7 +219,7 @@ def obtener_datos_curp(curp):
 
 #image = "images/ine_test_1.jpg"
 #image = "images/ine_uriel.jpg"
-image = "images/img_5.jpg"
+image = "images/img_1.jpg"
 
 text = extract_all_text(image)
 print("Text:",text)
@@ -222,12 +228,12 @@ print("Text clean:",text_clean)
 curp = extraer_curp(text_clean)
 curp = corregir_fecha_curp(curp)
 print(curp)
-#datos_curp = curp_scraping(curp)
-#datos_curp = obtener_datos_curp(curp)
-#print("datos_curp",datos_curp)
+datos = curp_scraping(curp)
+#datos = obtener_datos_curp(curp)
 
-localidad = obtener_localidad(text_clean)
-print("localidad: ",localidad)
+
+datos["localidad"] = obtener_localidad(text_clean)
+print("datos: ", datos)
 
 
 
