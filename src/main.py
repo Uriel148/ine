@@ -169,7 +169,7 @@ def obtener_localidad(texto):
     elif coincidencia2:
         return coincidencia2.group(1).strip()
     else:
-        return None #Si se trabaja con un municipio por defecto este campo es posible cambiarlo
+        return None #Si se trabaja con un municipio por defecto este campo es posible cambiarlo a ese municipio de defecto
 
 def obtener_datos_curp(curp):
     
