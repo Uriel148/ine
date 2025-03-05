@@ -232,7 +232,10 @@ datos = curp_scraping(curp)
 #datos = obtener_datos_curp(curp)
 
 
-datos["localidad"] = obtener_localidad(text_clean)
+datos["Localidad"] = obtener_localidad(text_clean)
+if datos["Localidad"] == None:
+    datos["Localidad"] = input("Introduzca la Localidad: ")
+
 print("datos: ", datos)
 
 
